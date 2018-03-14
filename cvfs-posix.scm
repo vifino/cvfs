@@ -1,7 +1,7 @@
 ;; posix backend for cvfs
 [module cvfs-posix ()
   (import chicken scheme)
-  (use cvfs posix srfi-13)
+  (use cvfs posix srfi-13 files)
 
   (define (cvfs-posix:get-path inst subpath)
     (string-concatenate/shared (list (cdr inst) subpath)))
@@ -22,10 +22,23 @@
            (directory dir #t)
            #f)))
 
+   ;; mkdir
+   (lambda (inst path)
+     (create-directory (cvfs-posix:get-path inst path) #t))
+
    ;; delete
-   #f
-   ;; copy
-   #f
+   (lambda (inst path)
+     (let ([path (cvfs-posix:get-path inst path)])
+       (if (directory? path)
+           (delete-directory path #t)
+           (if (regular-file? path)
+               (delete-file path)
+               #f))))
+   ;; same device copy
+   (lambda (inst f1 f2)
+     (file-copy (cvfs-posix:get-path inst f1)
+                (cvfs-posix:get-path inst f2)
+                #t))
 
    ;; exists?
    (lambda (inst path)
