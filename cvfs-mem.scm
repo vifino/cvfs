@@ -18,7 +18,7 @@
          (let ([buf (open-output-string)]
                [hashtable (cdr inst)])
            (begin
-             (if (and (eq? mode 'append) (hash-table-exists? path))
+             (if (and (eq? mode 'append) (hash-table-exists? hashtable path))
                  (display (hash-table-ref hashtable path) buf))
              (make-output-port
               (lambda (str) (display str buf))

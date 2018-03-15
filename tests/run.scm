@@ -1,7 +1,3 @@
-(use inclub)
-(inclub "cvfs")
-(inclub "cvfs-posix")
-(inclub "cvfs-mem")
 (use cvfs cvfs-posix cvfs-mem)
 
 (define vfs (cvfs:new))

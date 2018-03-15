@@ -3,6 +3,11 @@
 (compile -s -O3 -d1 cvfs-posix.scm -j cvfs-posix)
 (compile -s -O3 -d1 cvfs-mem.scm -j cvfs-mem)
 
+;; compile .import.so
+(compile -s -O3 -d0 cvfs.import.scm)
+(compile -s -O3 -d0 cvfs-posix.import.scm)
+(compile -s -O3 -d0 cvfs-mem.import.scm)
+
 ;; produce .o
 (compile -c -O3 -d1 cvfs -unit cvfs)
 (compile -c -O3 -d1 cvfs-posix -unit cvfs-posix)
@@ -13,6 +18,7 @@
 	'cvfs
 	;; Files to install for your extension:
 	'("cvfs.so" "cvfs-posix.so" "cvfs-mem.so"
+	  "cvfs.import.so" "cvfs-posix.import.so" "cvfs-mem.import.so"
 	  "cvfs.o" "cvfs-posix.o" "cvfs-mem.o")
 	'((static "cvfs.o" "cvfs-posix.o" "cvfs-mem.o")
           (version "1.0")))
