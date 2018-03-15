@@ -1,7 +1,7 @@
 ;; small vfs thing
 ;;
 ;; small definition list:
-;;  mode: symbol, 'read or 'write
+;;  mode: symbol, 'read or 'write are the common ones, 'append or custom things depend on the backend.
 ;;  dpath: string, a unix like filepath, passed to the drivers, ie /path/to/stuff.txt
 ;;  inst: (backend-name . state), cons of backend specific state and the backend's registered name, a string.
 
@@ -122,6 +122,7 @@
        (reverse!
         (fn fn split '()))
        "/")))
+
   (define fpregexp (regexp "^([A-Za-z0-9\\-_]*:)?(.*)$"))
   (define (parse-path vfs path)
     (let ([parsed (string-match fpregexp path)])

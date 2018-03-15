@@ -1,16 +1,18 @@
 ;; produce .so
 (compile -s -O3 -d1 cvfs.scm -j cvfs)
 (compile -s -O3 -d1 cvfs-posix.scm -j cvfs-posix)
+(compile -s -O3 -d1 cvfs-mem.scm -j cvfs-mem)
 
 ;; produce .o
 (compile -c -O3 -d1 cvfs -unit cvfs)
 (compile -c -O3 -d1 cvfs-posix -unit cvfs-posix)
+(compile -c -O3 -d1 cvfs-mem -unit cvfs-mem)
 
 (install-extension
   ;; Name of your extension:
 	'cvfs
 	;; Files to install for your extension:
-	'("cvfs.so" "cvfs-posix.so"
-          "cvfs.o" "cvfs-posix.o")
-	'((static "cvfs.o" "cvfs-posix.o")
+	'("cvfs.so" "cvfs-posix.so" "cvfs-mem.so"
+	  "cvfs.o" "cvfs-posix.o" "cvfs-mem.o")
+	'((static "cvfs.o" "cvfs-posix.o" "cvfs-mem.o")
           (version "1.0")))
