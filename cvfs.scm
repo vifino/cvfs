@@ -3,7 +3,7 @@
 ;; small definition list:
 ;;  mode: symbol, 'read or 'write are the common ones, 'append or custom things depend on the backend.
 ;;  dpath: string, a unix like filepath, passed to the drivers, ie /path/to/stuff.txt
-;;  inst: (backend-name . state), cons of backend specific state and the backend's registered name, a string.
+;;  inst: (backend-name . state), cons of backend specific state and the backend's registered name, a symbol.
 
 [module cvfs (cvfs:new
               cvfs:create-backend cvfs:call-backend cvfs:list-backends
@@ -13,9 +13,10 @@
 
               cvfs:open cvfs:list cvfs:mkdir
               cvfs:delete cvfs:copy
-              cvfs:exists? cvfs:dir?)
+              cvfs:exists? cvfs:dir?
+              clean-path)
   (import chicken scheme)
-  (use srfi-1 srfi-13 srfi-69 data-structures regex)
+  (use srfi-1 srfi-13 srfi-69 data-structures regex ports)
 
   ;; backends
   (define-record cvfs:backend
@@ -32,7 +33,7 @@
     dir? ; (dir? inst dpath)
     )
 
-  (define cvfs:backends (make-hash-table string=?))
+  (define cvfs:backends (make-hash-table))
   (define (cvfs:list-backends) (hash-table-keys cvfs:backends))
   (define (cvfs:register-backend backend-name backend)
     (hash-table-set! cvfs:backends backend-name backend))
@@ -60,7 +61,7 @@
         ((eq? fn 'copy) (cvfs:backend-copy backend))
         ((eq? fn 'exists?) (cvfs:backend-exists? backend))
         ((eq? fn 'dir?) (cvfs:backend-dir? backend))
-        (#t (error "no backend function" backend-name))))
+        (#t (error "(cvfs) no backend function" backend-name))))
      (cons
       (cons backend-name state)
       args)))
@@ -84,7 +85,7 @@
                (apply
                 (cvfs:backend-init (hash-table-ref cvfs:backends backend-name))
                 args)))
-        (error "no such backend" backend-name)))
+        (error "(cvfs) no such backend" backend-name)))
 
   (define (cvfs:call-drive vfs drive-name fn . args)
     (let ([drives (cvfs:vfs-drives vfs)])
@@ -94,14 +95,14 @@
                    (cons (car drive)
                          (cons fn
                                (cons (cdr drive) args)))))
-          (error "no such drive" drive-name))))
+          (error "(cvfs) no such drive" drive-name))))
 
   ;; default device
   (define (cvfs:get-default vfs)
     (let ([default (cvfs:vfs-default-drive vfs)])
       (if default
           default
-          (error "no default vfs drive set"))))
+          (error "(cvfs) no default vfs drive set"))))
   (define (cvfs:set-default vfs default)
     (cvfs:vfs-default-drive-set! vfs default))
 
@@ -111,13 +112,14 @@
           [fn (lambda (self work parsed)
                 (if (eq? work '())
                     parsed
-                    (self self (cdr work) (cond
-                                           ((string=? (car work) "..")
-                                            (if (eq? parsed '())
-                                                '()
-                                                (cdr parsed)))
-                                           ((string=? (car work) ".") parsed)
-                                           (#t (cons (car work) parsed))))))])
+                    (self self (cdr work)
+                          (cond
+                           ((string=? (car work) "..")
+                            (if (eq? parsed '())
+                                (error "(cvfs) tried to escape root?" path)
+                                (cdr parsed)))
+                           ((string=? (car work) ".") parsed)
+                           (#t (cons (car work) parsed))))))])
       (string-join
        (reverse!
         (fn fn split '()))
@@ -135,7 +137,14 @@
   ;; router stuff, makes things work
   (define (cvfs:call vfs fn path . args)
     (cond
-     ;; ((eq? fn 'copy) ()) ; copy extrawurst, same device copy just calls 'copy, interdevice must open and pipe the ports
+     ((eq? fn 'copy) (let ([p1 (parse-path vfs path)] ; copy extrawurst, same device copy just calls 'copy, interdevice must open and pipe the ports
+                           [p2 (parse-path vfs (car args))])
+                       (if (string=? (car p1) (car p2))
+                           (cvfs:call-drive vfs (car p1) 'copy (cadr p1) (cadr p2)) ; same-device copy
+                           (let ([in  (cvfs:call vfs (car p1) 'open (cadr p1) 'read)] ; inter device copy
+                                 [out (cvfs:call vfs (car p2) 'open (cadr p2) 'write)])
+                             (copy-port in out)
+                             #t))))
      (#t (let ([parsed (parse-path vfs path)])
            (apply
             cvfs:call-drive
@@ -146,8 +155,8 @@
                                     args)))))))))
 
   ;; handy aliases
-  (define (cvfs:open vfs mode path)
-    (cvfs:call vfs 'open mode path))
+  (define (cvfs:open vfs path mode)
+    (cvfs:call vfs 'open path mode))
   (define (cvfs:list vfs path)
     (cvfs:call vfs 'list path))
   (define (cvfs:mkdir vfs path)

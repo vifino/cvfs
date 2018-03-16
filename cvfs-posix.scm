@@ -7,7 +7,7 @@
     (string-concatenate/shared (list (cdr inst) subpath)))
 
   (cvfs:create-backend
-   "posix"
+   'posix
    ;; init
    (lambda (root) (string-concatenate (list root "/" )))
    ;; open

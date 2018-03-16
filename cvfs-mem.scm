@@ -6,7 +6,7 @@
   (use cvfs ports srfi-13 srfi-69)
 
   (cvfs:create-backend
-   "mem"
+   'mem
    ;; init
    (lambda () (make-hash-table string=?))
    ;; open
@@ -14,7 +14,7 @@
      (if (eq? mode 'read)
          (if (hash-table-exists? (cdr inst) path)
              (open-input-string (hash-table-ref (cdr inst) path))
-             #f)
+             (error "(cvfs-mem) can't open non-existant file" path))
          (let ([buf (open-output-string)]
                [hashtable (cdr inst)])
            (begin
