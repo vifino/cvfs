@@ -3,9 +3,15 @@
 (use cvfs cvfs-posix cvfs-mem)
 
 (define vfs (cvfs:new))
-(print "init")
-(cvfs:def-drive vfs "posix" 'posix ".")
-(cvfs:def-drive vfs "mem" 'mem)
+
+(test-group "basic functionality"
+            (test-assert "loads 'posix" (cvfs:def-drive vfs "posix" 'posix "."))
+            (test-assert "loads 'mem" (cvfs:def-drive vfs "mem" 'mem))
+
+            (test-error "complains if no default set and drive not in path" (cvfs:list vfs ""))
+            (test-assert "setting default drive" (cvfs:set-default vfs "mem"))
+            (test "did set default drive" "mem" (cvfs:get-default vfs))
+            (test-assert "doesn't complain if no drive in path but default set" (cvfs:list vfs "")))
 
 (define-constant teststr "Hello, World!")
 

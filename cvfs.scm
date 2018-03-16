@@ -13,8 +13,7 @@
 
               cvfs:open cvfs:list cvfs:mkdir
               cvfs:delete cvfs:copy
-              cvfs:exists? cvfs:dir?
-              clean-path)
+              cvfs:exists? cvfs:dir?)
   (import chicken scheme)
   (use srfi-1 srfi-13 srfi-69 data-structures regex ports)
 
@@ -130,9 +129,9 @@
     (let ([parsed (string-match fpregexp path)])
       (if parsed
           (if (cadr parsed)
-              (list (string-trim-right (second parsed) #\:) (clean-path (third parsed)))
+              (cons (string-trim-right (cadr parsed) #\:) (clean-path (third parsed)))
               (cons (cvfs:get-default vfs) (clean-path (third parsed))))
-          (list (cvfs:get-default vfs) ""))))
+          (cons (cvfs:get-default vfs) ""))))
 
   ;; router stuff, makes things work
   (define (cvfs:call vfs fn path . args)
@@ -140,18 +139,18 @@
      ((eq? fn 'copy) (let ([p1 (parse-path vfs path)] ; copy extrawurst, same device copy just calls 'copy, interdevice must open and pipe the ports
                            [p2 (parse-path vfs (car args))])
                        (if (string=? (car p1) (car p2))
-                           (cvfs:call-drive vfs (car p1) 'copy (cadr p1) (cadr p2)) ; same-device copy
-                           (let ([in  (cvfs:call vfs (car p1) 'open (cadr p1) 'read)] ; inter device copy
-                                 [out (cvfs:call vfs (car p2) 'open (cadr p2) 'write)])
+                           (cvfs:call-drive vfs (car p1) 'copy (cdr p1) (cdr p2)) ; same-device copy
+                           (let ([in  (cvfs:call vfs (car p1) 'open (cdr p1) 'read)] ; inter device copy
+                                 [out (cvfs:call vfs (car p2) 'open (cdr p2) 'write)])
                              (copy-port in out)
                              #t))))
      (#t (let ([parsed (parse-path vfs path)])
            (apply
             cvfs:call-drive
             (cons vfs
-                  (cons (first parsed)
+                  (cons (car parsed)
                         (cons fn
-                              (cons (second parsed)
+                              (cons (cdr parsed)
                                     args)))))))))
 
   ;; handy aliases
