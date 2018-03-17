@@ -6,7 +6,7 @@
   (define (cvfs-posix:get-path inst subpath)
     (string-concatenate/shared (list (cdr inst) subpath)))
 
-  (cvfs:create-backend
+  (create-backend
    'posix
    ;; init
    (lambda (root) (string-concatenate (list root "/" )))
@@ -15,7 +15,7 @@
      (if (eq? mode 'write)
          (open-output-file (cvfs-posix:get-path inst path))
          (open-input-file (cvfs-posix:get-path inst path))))
-   ;; list
+   ;; dir
    (lambda (inst path)
      (let ([dir (if (string=? path "") (cdr inst) (cvfs-posix:get-path inst path))])
        (if (directory? dir)

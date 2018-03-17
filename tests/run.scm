@@ -1,6 +1,6 @@
 (require-extension test)
 (use srfi-13)
-(use cvfs cvfs-posix cvfs-mem)
+(use (prefix cvfs cvfs:) cvfs-posix cvfs-mem)
 
 (define vfs (cvfs:new))
 
@@ -8,10 +8,10 @@
             (test-assert "loads 'posix" (cvfs:def-drive vfs "posix" 'posix "."))
             (test-assert "loads 'mem" (cvfs:def-drive vfs "mem" 'mem))
 
-            (test-error "complains if no default set and drive not in path" (cvfs:list vfs ""))
+            (test-error "complains if no default set and drive not in path" (cvfs:dir vfs ""))
             (test-assert "setting default drive" (cvfs:set-default vfs "mem"))
             (test "did set default drive" "mem" (cvfs:get-default vfs))
-            (test-assert "doesn't complain if no drive in path but default set" (cvfs:list vfs "")))
+            (test-assert "doesn't complain if no drive in path but default set" (cvfs:dir vfs "")))
 
 (define-constant teststr "Hello, World!")
 

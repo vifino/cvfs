@@ -5,7 +5,7 @@
   (import chicken scheme)
   (use cvfs ports srfi-13 srfi-69)
 
-  (cvfs:create-backend
+  (create-backend
    'mem
    ;; init
    (lambda () (make-hash-table string=?))
@@ -25,7 +25,7 @@
               (lambda () (begin
                            (hash-table-set! hashtable path (get-output-string buf))
                            (close-output-port buf))))))))
-   ;; list
+   ;; dir
    (lambda (inst path)
      (hash-table-keys (cdr inst)))
 
